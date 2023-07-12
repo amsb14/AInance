@@ -1,12 +1,17 @@
 import cohere
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-# Load the environment variables from the .env file
-load_dotenv()
 
 # Access the value of an environment variable
-api_key = os.getenv("API_KEY")
+api_key = os.environ["API_KEY"]
+
+
+# Load the environment variables from the .env file
+# load_dotenv()
+
+# Access the value of an environment variable
+# api_key = os.getenv("API_KEY")
 
 co = cohere.Client(api_key) # This is your trial API key
 
