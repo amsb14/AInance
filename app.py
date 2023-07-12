@@ -8,7 +8,6 @@ from cohere_ai import generate_prompt
 
 # st.title('Personal Finance Analyzer')
 
-# name = st.text_input("Enter your name")
 
 # Create a sidebar for primary tabs
 primary_tab = st.sidebar.radio('Select Mode', ['Individuals', 'Companies'])
