@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from decimal import Decimal
 from cohere_ai import generate_prompt
+from prompt_templates import construct_prompt
 
 # st.title('Personal Finance Analyzer')
 
@@ -122,7 +123,7 @@ if primary_tab == 'Individuals':
                             st.markdown("#### Savings and Investments:")
                             st.write(f"Exceptional! You are setting a great example by saving much more than the 20% target set by the 50-30-20 rule. Keep this up and you are on your way to achieving substantial financial security.")
                 
-                from prompt_templates import construct_prompt
+                
                 def view_smart_analysis(prompt):
                     analysis = generate_prompt(prompt)
                     st.write((analysis))
