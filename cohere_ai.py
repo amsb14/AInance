@@ -2,7 +2,7 @@ import cohere
 import os
 # from dotenv import load_dotenv
 
-api_key = os.environ["API_KEY"]
+api_key = st.secrets["API_KEY"]
 # Load the environment variables from the .env file
 # load_dotenv()
 
