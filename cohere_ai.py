@@ -1,4 +1,4 @@
-import streamlit
+import streamlit as st
 import cohere
 import os
 # from dotenv import load_dotenv
