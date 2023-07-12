@@ -1,14 +1,19 @@
 import streamlit as st
 import cohere
 import os
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
+# Load the environment variables from streamlit 
 api_key = st.secrets["api_key"]
-# Load the environment variables from the .env file
-# load_dotenv()
 
-# Access the value of an environment variable
+
+# =============================================================================
+# # Load the environment variables from the .env file
+# load_dotenv()
+# 
+# # Access the value of an environment variable
 # api_key = os.getenv("API_KEY")
+# =============================================================================
 
 co = cohere.Client(api_key) # This is your trial API key
 

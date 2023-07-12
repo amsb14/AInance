@@ -79,8 +79,6 @@ if primary_tab == 'Individuals':
                     wants_percentage = wants/total_income
                     savings_percentage = (investments_savings + leftover_income) /total_income
 
-                    
-                    
         
                     labels = ['Needs', 'Wants', 'Savings']
                     sizes = [needs_percentage, wants_percentage, savings_percentage]
@@ -99,31 +97,34 @@ if primary_tab == 'Individuals':
                     savings_margin = 0.05  # 10% margin for savings
                     
                     
-                    def view_quick_analysis():
-    
-                        st.markdown("")
+                def view_quick_analysis():
+                    st.markdown("")
+                    try:
                         if needs_percentage > (0.5):
                             st.markdown("#### Needs Expenses:")
                             st.write(f"Heads up! According to the 50-30-20 rule, only 50% of your income should be allocated to needs. Currently, you are overshooting this mark by more than {needs_percentage:.2%}. Consider revisiting your necessities to see if any adjustments can be made.")
                         elif needs_percentage < (0.5):
                             st.markdown("#### Needs Expenses:")
                             st.write(f"Impressive! Your needs expenses are significantly below the 50% target outlined by the 50-30-20 rule. This efficient budgeting on necessities offers more flexibility for your wants or savings.")
-                        
+                
                         if wants_percentage > (0.3):
                             st.markdown("#### Wants Expenses:")
                             st.write(f"Caution! Your discretionary spending has exceeded the 30% mark set by the 50-30-20 rule by more than {wants_percentage:.2%}. It might be a good idea to scrutinize these expenses to see where you can potentially cut back.")
                         elif wants_percentage < (0.3):
                             st.markdown("#### Wants Expenses:")
                             st.write(f"Well done! You are maintaining your discretionary spending well below the 30% guideline from the 50-30-20 rule. This disciplined management could be your secret to financial comfort.")
-                        
+                
                         if savings_percentage < (0.2):
                             st.markdown("#### Savings and Investments:")
                             st.write(f"Just a reminder, the 50-30-20 rule encourages allocating 20% of your income to savings. Currently, your savings fall more than {savings_percentage:.2%} below this target. If circumstances permit, try to boost your savings.")
                         elif savings_percentage > (0.2):
                             st.markdown("#### Savings and Investments:")
                             st.write(f"Exceptional! You are setting a great example by saving much more than the 20% target set by the 50-30-20 rule. Keep this up and you are on your way to achieving substantial financial security.")
-                
-                
+                    except NameError:
+                        st.warning("It appears your expenses may be exceeding your income. Please review your inputs and make sure all required fields are entered correctly.")
+                    
+
+
                 def view_smart_analysis(prompt):
                     analysis = generate_prompt(prompt)
                     st.write((analysis))
