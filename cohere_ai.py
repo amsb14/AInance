@@ -3,10 +3,6 @@ import os
 # from dotenv import load_dotenv
 
 
-# Access the value of an environment variable
-api_key = os.environ["API_KEY"]
-
-
 # Load the environment variables from the .env file
 # load_dotenv()
 
