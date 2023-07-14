@@ -19,9 +19,7 @@ if primary_tab == 'Individuals':
 
 
     with tab1:
-        
-        # st.write("Under Development")
-        # if name:
+
             personal_income = st.number_input("Enter your personal income", min_value=0, step=1, format="%i")
             other_income = st.number_input("Enter other incomes", min_value=0, step=1, format="%i")
         
@@ -163,8 +161,7 @@ if primary_tab == 'Individuals':
                           "Charity", "Vacation", "Fitness", "Books", "Pets", "Home improvement",
                           "Beauty", "Household goods", "Public transport", "Healthcare"]
     
-    
-        st.write("This tab is currently under development.")
+
         
         uploaded_file = st.file_uploader("Upload your bank account statement", type='csv')
     
@@ -333,7 +330,7 @@ if primary_tab == 'Individuals':
 elif primary_tab == 'Companies':
 
     # Create sub-tab for Companies
-    tab1, tab2 = st.tabs(["Income Statement", "Statement of financial position"])
+    tab1, tab2, tab3 = st.tabs(["Income Statement", "Balance Sheet", "Balance Sheet (Automatic)"])
     
     # option = st.selectbox(
     #     "What type would you like to use?", 
@@ -717,7 +714,151 @@ elif primary_tab == 'Companies':
                 elif option == 'Smart Analysis':
                     view_smart_analysis_corp()
                     time.sleep(3)
-                
+
+    with tab3:
+        uploaded_file = st.file_uploader("Upload your trial balance", type='csv')
+
+        if uploaded_file is not None:
+            # Read the CSV files
+            classifications_df = pd.read_csv('classifications.csv')
+            tb_df = pd.read_csv(uploaded_file)
+
+            # Merge the two dataframes based on 'Description'
+            merged_df = pd.merge(tb_df, classifications_df, on='Description', how='inner')
+
+            # Group by 'Category' and calculate the sum of 'Amount'
+            category_sum = merged_df.groupby('Category')['Amount'].sum()
+
+            # Convert the groupby object to a DataFrame for better visualization
+            category_sum_df = category_sum.reset_index()
+
+            # Use Streamlit to display the DataFrame
+            # st.write(category_sum_df)
+
+            # # Display the total amount for each category using st.markdown
+            # for i in range(category_sum_df.shape[0]):
+            #     st.markdown(
+            #         f"**Category:** {category_sum_df.iloc[i, 0]}  \n**Total Amount:** {category_sum_df.iloc[i, 1]}")
+            #
+            #
+
+            def view_report():
+                # Display the calculated results
+
+                st.markdown("#### Assets")
+                st.markdown(f'**Current Assets:**')
+
+                # Create variables for specific rows
+                accounts_receivable_and_prepayments = category_sum_df.iloc[1, 1]
+                cash_and_cash_equivalents = category_sum_df.iloc[2, 1]
+                inventory = category_sum_df.iloc[7, 1]
+                other_short_term_assets = category_sum_df.iloc[15, 1]
+
+                # Sum up the amounts
+                total_current_assets = accounts_receivable_and_prepayments + cash_and_cash_equivalents + inventory + other_short_term_assets
+
+                # Display the variables
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Accounts receivable and prepayments: {accounts_receivable_and_prepayments:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Cash and cash equivalents: {cash_and_cash_equivalents:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Inventory: {inventory:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Other short-term assets: {other_short_term_assets:,.2f}')
+                st.markdown(f'**Total Current Assets:** {total_current_assets:,.2f}')
+                st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
+                #
+                # st.markdown(f'**Non Current Assets:**')
+                # Create variables for additional rows
+                property_plant_equipment = category_sum_df.iloc[17, 1]
+                long_term_investments = category_sum_df.iloc[9, 1]
+                intangible_assets = category_sum_df.iloc[6, 1]
+                deferred_charges = category_sum_df.iloc[5, 1]
+
+                # Add these amounts to the total
+                total_non_current_assets = property_plant_equipment + long_term_investments + intangible_assets + deferred_charges
+
+                # Display the additional variables
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Property, Plant & Equipment (PPE): {property_plant_equipment:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Long-term investments: {long_term_investments:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Intangible assets: {intangible_assets:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Deferred Charges and Other Noncurrent Assets: {deferred_charges:,.2f}')
+                st.markdown(f'**Total Non-current Assets:** {total_non_current_assets:,.2f}')
+                st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
+
+                #
+                st.markdown("#### Liabilities and Equity")
+                st.markdown(f'**Liabilities:**')
+                st.markdown(f'**Current Liabilities:**')
+                #
+
+                # Create variables for additional rows
+                current_portion_of_long_term_debt = category_sum_df.iloc[4, 1]
+                short_term_debt = category_sum_df.iloc[19, 1]
+                accounts_payable = category_sum_df.iloc[0, 1]
+
+                # Add these amounts to the total
+                total_current_liabilities = current_portion_of_long_term_debt + short_term_debt + accounts_payable
+
+                # Display the additional variables
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Current portion of long-term debt: {current_portion_of_long_term_debt:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Short-term debt: {short_term_debt:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Account Payable: {accounts_payable:,.2f}')
+                st.markdown(f'**Total Current Liabilities:** {total_current_liabilities:,.2f}')
+                st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
+                #
+                st.markdown(f'**Noncurrent Liabilities:**')
+
+                long_term_debt_loan = category_sum_df.iloc[8, 1]
+                total_non_current_liabilities = long_term_debt_loan
+                total_liabilities = total_current_liabilities + total_non_current_liabilities
+
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Long-term Debt (loan): {long_term_debt_loan:,.2f}')
+                st.markdown(f'**Total Non-current Liabilities:** {total_non_current_liabilities:,.2f}')
+                st.markdown(f'**Total Liabilities:** {total_liabilities:,.2f}')
+                st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
+
+
+                #
+                st.markdown(f'**Equity:**')
+                owner_capital = category_sum_df.iloc[16, 1]
+                retained_earnings = category_sum_df.iloc[18, 1]
+                total_equity = owner_capital + retained_earnings
+                total_liabilities_and_equity = total_liabilities + total_equity
+
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Owner\'s Capital: {owner_capital:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Retained Earnings:{retained_earnings:,.2f}')
+                st.markdown(f'**Total Equity:** {total_equity:,.2f}')
+                st.markdown("<hr style='border:1px solid blue'> ", unsafe_allow_html=True)
+                st.markdown(f'**Total Liabilities & Equity:** {total_liabilities_and_equity:,.2f}')
+                st.markdown("<hr style='border:1px solid blue'> ", unsafe_allow_html=True)
+                #
+                # st.markdown(f'**Average PPE:** {average_ppe:,.2f}')
+                # st.markdown(f'**Average Inventory:** {average_inventory:,.2f}')
+                # st.markdown(f'**Average Accounts Receivable:** {average_accounts_receivable:,.2f}')
+
+                # Create variables for additional rows
+                opening_accounts_receivable = category_sum_df.iloc[12, 1]
+                opening_balance_ppe = category_sum_df.iloc[13, 1]
+                opening_balance_inventory = category_sum_df.iloc[14, 1]
+                net_sales = category_sum_df.iloc[11, 1]
+                cost_of_goods_sold = category_sum_df.iloc[3, 1]
+                net_income = category_sum_df.iloc[10, 1]
+
+                # Add these amounts to the total
+                # other_total = opening_accounts_receivable + opening_balance_ppe + opening_balance_inventory + net_sales + cost_of_goods_sold + net_income
+
+                # Display the additional variables
+
+                st.markdown("#### Other")
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Opening accounts receivable: {opening_accounts_receivable:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Opening balance PPE: {opening_balance_ppe:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Opening balance inventory: {opening_balance_inventory:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Net sales: {net_sales:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Cost of goods sold: {cost_of_goods_sold:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Net income: {net_income:,.2f}')
+
+
+            view_report()
+
+
       
                   
 
