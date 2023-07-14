@@ -720,7 +720,7 @@ elif primary_tab == 'Companies':
 
         if uploaded_file is not None:
             # Read the CSV files
-            classifications_df = pd.read_csv('classifications.csv')
+            classifications_df = pd.read_csv('utils/classifications.csv')
             tb_df = pd.read_csv(uploaded_file)
 
             # Merge the two dataframes based on 'Description'
