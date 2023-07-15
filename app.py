@@ -11,7 +11,7 @@ from prompt_templates import construct_prompt
 
 
 # Create a sidebar for primary tabs
-primary_tab = st.sidebar.radio('Select Mode', ['Individuals', 'Companies'])
+primary_tab = st.sidebar.radio('Select Mode', ['Corporate'])
 
 # Primary Tab: Individuals
 if primary_tab == 'Individuals':
@@ -327,7 +327,7 @@ if primary_tab == 'Individuals':
         
 
 # Primary Tab: Companies
-elif primary_tab == 'Companies':
+elif primary_tab == 'Corporate':
 
     # Create sub-tab for Companies
     tab1, tab2, tab3, tab4 = st.tabs(["Income Statement", "Income Statement (Automatic)", "Balance Sheet", "Balance Sheet (Automatic)"])
