@@ -330,7 +330,7 @@ if primary_tab == 'Individuals':
 elif primary_tab == 'Companies':
 
     # Create sub-tab for Companies
-    tab1, tab2, tab3 = st.tabs(["Income Statement", "Balance Sheet", "Balance Sheet (Automatic)"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Income Statement", "Income Statement (Automatic)", "Balance Sheet", "Balance Sheet (Automatic)"])
     
     # option = st.selectbox(
     #     "What type would you like to use?", 
@@ -446,8 +446,94 @@ elif primary_tab == 'Companies':
         # Show the plot
         st.plotly_chart(fig)
         
-    
     with tab2:
+
+        uploaded_file = st.file_uploader("Upload your income statement", type='csv')
+
+        if uploaded_file is not None:
+            # Read the file into a DataFrame
+            data = pd.read_csv(uploaded_file)
+
+            # Convert DataFrame to a dictionary
+            data = data.set_index('Description').T.to_dict('records')[0]
+
+            # Calculate the different components of the income statement
+            gross_profit = data['Net Sales'] - data['Cost of goods sold']
+            total_operating_expense = data['General and Administration Expenses'] + data['Selling and Operating Expenses']
+            operating_expense = gross_profit - total_operating_expense
+            non_operating_expense = data['Gain/Loss on Financial Instruments'] + data['Gain/Loss on Foreign Currency'] + \
+                                    data['Other Income'] + data['Other Expense'] + data['Interest Expense']
+            EBIT = gross_profit - total_operating_expense + non_operating_expense
+            net_income = EBIT - data['Income Tax Expense']
+
+            # Calculate the ratios
+            if data['Net Sales'] != 0:
+                gross_margin = (gross_profit / data['Net Sales']) * 100
+                profit_margin = (net_income / data['Net Sales']) * 100
+                operating_margin = (total_operating_expense / data['Net Sales']) * 100
+            else:
+                gross_margin = 0
+                profit_margin = 0
+                operating_margin = 0
+
+            st.subheader('Income Statment:')
+            # Display the results
+            st.markdown(f'Net Sales: {format(data["Net Sales"], ",")}')
+            st.markdown(f'Cost of Goods Sold: {format(data["Cost of goods sold"], ",")}')
+            st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp; **Gross Profit:** {format(gross_profit, ",")}')
+            st.markdown('')
+            st.markdown(f'General and Administration Expenses: {format(data["General and Administration Expenses"], ",")}')
+            st.markdown(f'Selling and Operating Expenses: {format(data["Selling and Operating Expenses"], ",")}')
+            st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp; **Total Operating Expense:** {format(total_operating_expense, ",")}')
+            st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp; **Operating Income:** {format(operating_expense, ",")}')
+            # st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp; **Non Operating Expense:** {format(non_operating_expense, ",")}')
+            st.markdown('')
+            st.markdown(f'Other Income: {format(data["Other Income"], ",")}')
+            st.markdown(f'Gain/Loss on Financial Instruments: {format(data["Gain/Loss on Financial Instruments"], ",")}')
+            st.markdown(f'Gain/Loss on Foreign Currency: {format(data["Gain/Loss on Foreign Currency"], ",")}')
+            st.markdown(f'Interest Expense: {format(data["Interest Expense"], ",")}')
+            st.markdown(f'Other Expense: {format(data["Other Expense"], ",")}')
+            st.markdown('')
+            st.markdown(f'**Total Income Before Tax (EBIT):** {format(EBIT, ",")}')
+            st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Income Tax Expense: {format(data["Income Tax Expense"], ",")}')
+            st.markdown(f'**Net Income:** {format(net_income, ",")}')
+            st.markdown('')
+            st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
+            st.markdown(f'**Gross Profit Margin:** The company keeps {gross_margin:.2f}% for every Riyal it makes and the remainer goes on operating expenses')
+            st.markdown(f'**Operation Margin:** The company keeps {operating_margin:.2f}% revenue is left over after payign variable costs')
+            st.markdown(f'**Net Margin:** Net income was {profit_margin:.2f}% for every Riyal generated')
+
+            # First, we define a list with the labels (in this case, the names of the different metrics)
+            labels = ['Net Sales', 'Gross Profit', 'Operating Expense', 'Net Income']
+
+            # Then, we create a list with the corresponding values
+            values = [data["Net Sales"], gross_profit, total_operating_expense, net_income]
+            values = [format(i, ",") for i in values]
+
+            # Define a list of colors for each bar
+            colors = ['blue', 'green', 'red', 'orange']
+            # Create the bar chart
+            fig = go.Figure(data=[go.Bar(
+
+                x=labels,
+                y=values,
+                text=values,
+                textposition='auto',
+                marker_color=colors,
+
+            )])
+
+            # Add title and labels
+            fig.update_layout(
+                title_text='Financial Metrics',
+                xaxis_title="Metrics",
+                yaxis_title="Amount",
+            )
+
+            # Show the plot
+            st.plotly_chart(fig)
+
+    with tab3:
     
         col1, col2, col3 = st.columns(3)
     
@@ -699,9 +785,9 @@ elif primary_tab == 'Companies':
         st.subheader("Report")
         col1, col2, col3= st.columns([2,1,1])
         with col1:
-            option = st.selectbox('Please choose an analysis type', ('Statistics', 'Quick Analysis', 'Smart Analysis'))
+            option = st.selectbox('Please choose an analysis type', ('Statistics', 'Quick Analysis', 'Smart Analysis'), key='select_box_1')
            
-            if st.button('View'):
+            if st.button('View', key='view_button_1'):
                 
                 if option == 'Statistics':
                     view_report()
@@ -715,7 +801,7 @@ elif primary_tab == 'Companies':
                     view_smart_analysis_corp()
                     time.sleep(3)
 
-    with tab3:
+    with tab4:
         uploaded_file = st.file_uploader("Upload your trial balance", type='csv')
 
         if uploaded_file is not None:
@@ -732,15 +818,78 @@ elif primary_tab == 'Companies':
             # Convert the groupby object to a DataFrame for better visualization
             category_sum_df = category_sum.reset_index()
 
-            # Use Streamlit to display the DataFrame
-            # st.write(category_sum_df)
+            # Create variables for specific rows
+            accounts_receivable_and_prepayments = category_sum_df.iloc[1, 1]
+            cash_and_cash_equivalents = category_sum_df.iloc[2, 1]
+            inventory = category_sum_df.iloc[7, 1]
+            other_short_term_assets = category_sum_df.iloc[15, 1]
+            total_current_assets = accounts_receivable_and_prepayments + cash_and_cash_equivalents + inventory + other_short_term_assets
 
-            # # Display the total amount for each category using st.markdown
-            # for i in range(category_sum_df.shape[0]):
-            #     st.markdown(
-            #         f"**Category:** {category_sum_df.iloc[i, 0]}  \n**Total Amount:** {category_sum_df.iloc[i, 1]}")
-            #
-            #
+            property_plant_equipment = category_sum_df.iloc[17, 1]
+            long_term_investments = category_sum_df.iloc[9, 1]
+            intangible_assets = category_sum_df.iloc[6, 1]
+            deferred_charges = category_sum_df.iloc[5, 1]
+            total_non_current_assets = property_plant_equipment + long_term_investments + intangible_assets + deferred_charges
+            total_assets = total_current_assets + total_non_current_assets
+
+            # Create variables for additional rows
+            current_portion_of_long_term_debt = category_sum_df.iloc[4, 1]
+            short_term_debt = category_sum_df.iloc[19, 1]
+            accounts_payable = category_sum_df.iloc[0, 1]
+            total_current_liabilities = current_portion_of_long_term_debt + short_term_debt + accounts_payable
+
+            owner_capital = category_sum_df.iloc[16, 1]
+            retained_earnings = category_sum_df.iloc[18, 1]
+            total_equity = owner_capital + retained_earnings
+            total_liabilities_and_equity = total_liabilities + total_equity
+
+            long_term_debt_loan = category_sum_df.iloc[8, 1]
+            total_non_current_liabilities = long_term_debt_loan
+            total_liabilities = total_current_liabilities + total_non_current_liabilities
+
+            opening_accounts_receivable = category_sum_df.iloc[12, 1]
+            opening_balance_ppe = category_sum_df.iloc[13, 1]
+            opening_balance_inventory = category_sum_df.iloc[14, 1]
+            closing_accounts_receivable = accounts_receivable_and_prepayments
+            closing_balance_ppe = property_plant_equipment
+            closing_balance_inventory = inventory
+            net_sales = category_sum_df.iloc[11, 1]
+            cost_of_goods_sold = category_sum_df.iloc[3, 1]
+            net_income = category_sum_df.iloc[10, 1]
+
+            average_ppe = (closing_balance_ppe + opening_balance_ppe) / 2
+            average_inventory = (closing_balance_inventory + opening_balance_inventory) / 2
+            average_accounts_receivable = (closing_accounts_receivable + opening_accounts_receivable) / 2
+
+            try: fixed_assets_turnover_ratio = net_sales / average_ppe
+            except ZeroDivisionError: fixed_assets_turnover_ratio = 'N/A (Cannot divide by zero)'
+
+            try: current_ratio = total_current_assets / total_current_liabilities
+            except ZeroDivisionError: current_ratio = 'N/A (Cannot divide by zero)'
+
+            quick_assets = cash_equivalents + accounts_receivable
+
+            try: quick_ratio = quick_assets / total_current_liabilities
+            except: quick_ratio = 'N/A (Cannot divide by zero)'
+
+            try: inventory_turnover_ratio = cost_of_goods_sold / average_inventory
+            except: inventory_turnover_ratio = 'N/A (Cannot divide by zero)'
+
+            try: inventory_turnover_ratio_by_day = 365 / inventory_turnover_ratio
+            except: inventory_turnover_ratio_by_day = 'N/A (Cannot divide by zero)'
+
+            try: accounts_receivable_turnover_ratio = net_sales / average_accounts_receivable
+            except: accounts_receivable_turnover_ratio = 'N/A (Cannot divide by zero)'
+
+            try: debt_to_equity_ratio = long_term_debt / total_equity
+            except: debt_to_equity_ratio = 'N/A (Cannot divide by zero)'
+
+            try: return_on_equity = net_income / total_equity
+            except: return_on_equity = 'N/A (Cannot divide by zero)'
+
+            try: debt_equity_ratio = total_liabilities / total_equity
+            except: debt_equity_ratio = 'N/A (Cannot divide by zero)'
+
 
             def view_report():
                 # Display the calculated results
@@ -748,16 +897,6 @@ elif primary_tab == 'Companies':
                 st.markdown("#### Assets")
                 st.markdown(f'**Current Assets:**')
 
-                # Create variables for specific rows
-                accounts_receivable_and_prepayments = category_sum_df.iloc[1, 1]
-                cash_and_cash_equivalents = category_sum_df.iloc[2, 1]
-                inventory = category_sum_df.iloc[7, 1]
-                other_short_term_assets = category_sum_df.iloc[15, 1]
-
-                # Sum up the amounts
-                total_current_assets = accounts_receivable_and_prepayments + cash_and_cash_equivalents + inventory + other_short_term_assets
-
-                # Display the variables
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Accounts receivable and prepayments: {accounts_receivable_and_prepayments:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Cash and cash equivalents: {cash_and_cash_equivalents:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Inventory: {inventory:,.2f}')
@@ -766,49 +905,27 @@ elif primary_tab == 'Companies':
                 st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
                 #
                 # st.markdown(f'**Non Current Assets:**')
-                # Create variables for additional rows
-                property_plant_equipment = category_sum_df.iloc[17, 1]
-                long_term_investments = category_sum_df.iloc[9, 1]
-                intangible_assets = category_sum_df.iloc[6, 1]
-                deferred_charges = category_sum_df.iloc[5, 1]
 
-                # Add these amounts to the total
-                total_non_current_assets = property_plant_equipment + long_term_investments + intangible_assets + deferred_charges
-
-                # Display the additional variables
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Property, Plant & Equipment (PPE): {property_plant_equipment:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Long-term investments: {long_term_investments:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Intangible assets: {intangible_assets:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Deferred Charges and Other Noncurrent Assets: {deferred_charges:,.2f}')
                 st.markdown(f'**Total Non-current Assets:** {total_non_current_assets:,.2f}')
+
+                st.markdown(f'**Total Assets:** {total_assets:,.2f}')
                 st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
 
-                #
                 st.markdown("#### Liabilities and Equity")
                 st.markdown(f'**Liabilities:**')
                 st.markdown(f'**Current Liabilities:**')
-                #
 
-                # Create variables for additional rows
-                current_portion_of_long_term_debt = category_sum_df.iloc[4, 1]
-                short_term_debt = category_sum_df.iloc[19, 1]
-                accounts_payable = category_sum_df.iloc[0, 1]
-
-                # Add these amounts to the total
-                total_current_liabilities = current_portion_of_long_term_debt + short_term_debt + accounts_payable
-
-                # Display the additional variables
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Current portion of long-term debt: {current_portion_of_long_term_debt:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Short-term debt: {short_term_debt:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Account Payable: {accounts_payable:,.2f}')
                 st.markdown(f'**Total Current Liabilities:** {total_current_liabilities:,.2f}')
                 st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
-                #
-                st.markdown(f'**Noncurrent Liabilities:**')
 
-                long_term_debt_loan = category_sum_df.iloc[8, 1]
-                total_non_current_liabilities = long_term_debt_loan
-                total_liabilities = total_current_liabilities + total_non_current_liabilities
+                st.markdown(f'**Noncurrent Liabilities:**')
 
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Long-term Debt (loan): {long_term_debt_loan:,.2f}')
                 st.markdown(f'**Total Non-current Liabilities:** {total_non_current_liabilities:,.2f}')
@@ -816,47 +933,144 @@ elif primary_tab == 'Companies':
                 st.markdown("""<hr style='border:1px solid blue'> """, unsafe_allow_html=True)
 
 
-                #
                 st.markdown(f'**Equity:**')
-                owner_capital = category_sum_df.iloc[16, 1]
-                retained_earnings = category_sum_df.iloc[18, 1]
-                total_equity = owner_capital + retained_earnings
-                total_liabilities_and_equity = total_liabilities + total_equity
-
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Owner\'s Capital: {owner_capital:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Retained Earnings:{retained_earnings:,.2f}')
                 st.markdown(f'**Total Equity:** {total_equity:,.2f}')
                 st.markdown("<hr style='border:1px solid blue'> ", unsafe_allow_html=True)
                 st.markdown(f'**Total Liabilities & Equity:** {total_liabilities_and_equity:,.2f}')
                 st.markdown("<hr style='border:1px solid blue'> ", unsafe_allow_html=True)
-                #
-                # st.markdown(f'**Average PPE:** {average_ppe:,.2f}')
-                # st.markdown(f'**Average Inventory:** {average_inventory:,.2f}')
-                # st.markdown(f'**Average Accounts Receivable:** {average_accounts_receivable:,.2f}')
 
-                # Create variables for additional rows
-                opening_accounts_receivable = category_sum_df.iloc[12, 1]
-                opening_balance_ppe = category_sum_df.iloc[13, 1]
-                opening_balance_inventory = category_sum_df.iloc[14, 1]
-                net_sales = category_sum_df.iloc[11, 1]
-                cost_of_goods_sold = category_sum_df.iloc[3, 1]
-                net_income = category_sum_df.iloc[10, 1]
-
-                # Add these amounts to the total
                 # other_total = opening_accounts_receivable + opening_balance_ppe + opening_balance_inventory + net_sales + cost_of_goods_sold + net_income
 
                 # Display the additional variables
-
                 st.markdown("#### Other")
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Opening accounts receivable: {opening_accounts_receivable:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Closing accounts receivable: {closing_accounts_receivable:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Opening balance PPE: {opening_balance_ppe:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Closing balance PPE: {closing_balance_ppe:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Opening balance inventory: {opening_balance_inventory:,.2f}')
+                st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Closing balance inventory: {closing_balance_inventory:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Net sales: {net_sales:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Cost of goods sold: {cost_of_goods_sold:,.2f}')
                 st.markdown(f'&nbsp;&nbsp;&nbsp;&nbsp;Net income: {net_income:,.2f}')
+                st.markdown("<hr style='border:1px solid blue'> ", unsafe_allow_html=True)
+
+                st.markdown(f'**Average PPE:** {average_ppe:,.2f}')
+                st.markdown(f'**Average Inventory:** {average_inventory:,.2f}')
+                st.markdown(f'**Average Accounts Receivable:** {average_accounts_receivable:,.2f}')
 
 
-            view_report()
+
+                def display_ratio(ratio_name, ratio_value):
+                    if isinstance(ratio_value, str):
+                        st.markdown(f'<p style="color:red;">**Error calculating {ratio_name}:** {ratio_value}</p>',
+                                    unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'**{ratio_name}:** {ratio_value:,.2f}')
+
+
+                # Create a dictionary mapping ratio names to their calculated values
+                ratios = {
+                    'Fixed Assets Turnover Ratio': fixed_assets_turnover_ratio,
+                    'Quick Assets': quick_assets,
+                    'Current Ratio': current_ratio,
+                    'Inventory Turnover Ratio': inventory_turnover_ratio,
+                    'Inventory Turnover Ratio by Day': inventory_turnover_ratio_by_day,
+                    'Accounts Receivable Turnover Ratio': accounts_receivable_turnover_ratio,
+                    'Debt to Equity Ratio': debt_to_equity_ratio,
+                    'Return on Equity (ROE)': return_on_equity,
+                    'Debt Equity Ratio': debt_equity_ratio,
+                }
+                # Loop through the dictionary and display each ratio
+                for ratio_name, ratio_value in ratios.items():
+                    display_ratio(ratio_name, ratio_value)
+
+
+            def view_quick_analysis_corp():
+                if not isinstance(fixed_assets_turnover_ratio, str) and \
+                        not isinstance(current_ratio, str) and \
+                        not isinstance(quick_ratio, str) and \
+                        not isinstance(inventory_turnover_ratio, str) and \
+                        not isinstance(inventory_turnover_ratio_by_day, str) and \
+                        not isinstance(accounts_receivable_turnover_ratio, str) and \
+                        not isinstance(debt_to_equity_ratio, str) and \
+                        not isinstance(return_on_equity, str) and \
+                        not isinstance(debt_equity_ratio, str):
+
+                    st.markdown(f"- For each Riyal invested in fixed assets, the company generates {fixed_assets_turnover_ratio:.2f} in net sales.")
+                    if current_ratio >= 1: st.markdown(f"- With a Current Ratio of {current_ratio:.2f}, the company is well-equipped to meet short-term liabilities with its short-term assets.")
+                    else: st.markdown(f"- With a Current Ratio of {current_ratio:.2f}, the company may face difficulties in meeting short-term liabilities with its short-term assets.")
+                    if quick_ratio >= 1: st.markdown(f"- A Quick Ratio of {quick_ratio:.2f} indicates the company's solid ability to cover current liabilities with its most liquid assets.")
+                    else: st.markdown(f"- A Quick Ratio of {quick_ratio:.2f} suggests the company might have issues covering current liabilities with its most liquid assets.")
+                    st.markdown(f"- The company rotates its inventory into finished goods approximately {inventory_turnover_ratio:.2f} times per year, translating to an average of {inventory_turnover_ratio_by_day:.2f} days to convert inventories into saleable products.")
+                    st.markdown(f"- On average, the company collects its receivables {accounts_receivable_turnover_ratio:.2f} times per year.")
+                    st.markdown(f"- The company has {debt_to_equity_ratio:.2f} units of debt for each unit of equity, indicating its leverage position.")
+                    st.markdown(f"- The company generates a profit of {return_on_equity:.2f} per unit of equity, illustrating the return it makes on its own net resources.")
+                    st.markdown(f"- For each unit of equity owned by the company's shareholders, the company owes {debt_equity_ratio:.2f} to its creditors, indicating its debt load relative to its equity.")
+
+
+            def view_smart_analysis_corp():
+                if not isinstance(fixed_assets_turnover_ratio, str) and \
+                        not isinstance(current_ratio, str) and \
+                        not isinstance(quick_ratio, str) and \
+                        not isinstance(inventory_turnover_ratio, str) and \
+                        not isinstance(inventory_turnover_ratio_by_day, str) and \
+                        not isinstance(accounts_receivable_turnover_ratio, str) and \
+                        not isinstance(debt_to_equity_ratio, str) and \
+                        not isinstance(return_on_equity, str) and \
+                        not isinstance(debt_equity_ratio, str):
+                    # Generate a single, comprehensive prompt
+                    prompt = f"""
+                    The company's financial performance is as follows:
+
+                    - Fixed Assets Turnover Ratio: {fixed_assets_turnover_ratio:.2f}
+                    - Current Ratio: {current_ratio:.2f}
+                    - Quick Ratio: {quick_ratio:.2f}
+                    - Inventory Turnover Ratio: {inventory_turnover_ratio:.2f}
+                    - Inventory Turnover Ratio by Day: {inventory_turnover_ratio_by_day:.2f}
+                    - Accounts Receivable Turnover Ratio: {accounts_receivable_turnover_ratio:.2f}
+                    - Debt to Equity Ratio: {debt_to_equity_ratio:.2f}
+                    - Return on Equity (ROE): {return_on_equity:.2f}
+                    - Debt Equity Ratio: {debt_equity_ratio:.2f}
+
+                    Based on this information, what insights and analyses can be drawn?
+                    """
+                    # Generate a single AI response
+                    response = generate_prompt(prompt)
+
+                    # Display the AI response
+                    st.markdown(response)
+
+
+            import time
+
+
+            # Use the second and third columns to create the selectbox and button
+            st.markdown("---")
+            st.subheader("Report")
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                option_auto = st.selectbox('Please choose an analysis type',
+                                      ('Statistics', 'Quick Analysis', 'Smart Analysis'), key='select_box_2')
+
+                if st.button('View', key='select_button_2'):
+                    if option_auto == 'Statistics':
+                        view_report()
+                    elif option_auto == 'Quick Analysis':
+                        with st.spinner('Wait ...'):
+                            time.sleep(1.5)
+                            view_quick_analysis_corp()
+                    elif option_auto == 'Smart Analysis':
+                        with st.spinner('Wait ...'):
+                            time.sleep(1)
+                            view_smart_analysis_corp()
+                            time.sleep(3)
+
+
+
+
+
 
 
       
